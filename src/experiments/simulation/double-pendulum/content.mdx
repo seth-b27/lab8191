@@ -1,0 +1,112 @@
+A double pendulum using 4th-order Runge-Kutta (RK4) integration. Fully deterministic - same initial angles always produce the same trajectory. 
+
+**Config**
+
+```ts
+const DEFAULT_CONFIG: PendulumConfig = {
+  theta1: 90,       // initial angle of arm 1 in degrees
+  theta2: 180,      // initial angle of arm 2 in degrees
+  m1: 0.6,          // mass of bob 1 (arbitrary units)
+  m2: 0.6,          // mass of bob 2
+  l1: 0.6,          // length of arm 1 (scaled by `scale`)
+  l2: 0.6,          // length of arm 2
+  gravity: 9.81,
+  dt: 0.008,        // RK4 timestep — keep ≤ 0.02 to avoid drift
+  substeps: 2,      // physics steps per animation frame
+  scale: 100,       // pixels per unit length
+  bobBaseRadius: 6,
+  bobMassScale: 3,  // heavier bobs appear larger
+  pivotColor:   '#000000',
+  arm1Color:    '#1a1a1a',
+  arm2Color:    '#1a1a1a',
+  bob1Color:    '#0000ee',
+  bob2Color:    '#0000ee',
+  armStrokeWidth: 2.5,
+  pivotRadius:    6,
+}
+```
+
+**Types**
+
+```ts
+export interface PendulumConfig { /* full field list above */ }
+
+// Four-component state vector: angles and angular velocities
+type StateVector = [number, number, number, number] // [θ1, θ2, ω1, ω2]
+```
+
+**RK4 integrator**
+
+The Euler-Lagrange equations give angular accelerations `a1` and `a2`. RK4 samples the derivative at four points within each timestep and takes a weighted average - far more stable than Euler integration at the same step size.
+
+```ts
+function derivatives([th1, th2, w1, w2]: StateVector, cfg: PendulumConfig): StateVector {
+  const { m1, m2, l1, l2, gravity: g } = cfg
+  const d = th1 - th2
+  const denom = 2*m1 + m2 - m2 * Math.cos(2*d)
+  const a1 = (-g*(2*m1+m2)*Math.sin(th1) - m2*g*Math.sin(th1-2*th2)
+              - 2*Math.sin(d)*m2*(w2*w2*l2 + w1*w1*l1*Math.cos(d))) / (l1*denom)
+  const a2 = (2*Math.sin(d)*(w1*w1*l1*(m1+m2) + g*(m1+m2)*Math.cos(th1)
+              + w2*w2*l2*m2*Math.cos(d))) / (l2*denom)
+  return [w1, w2, a1, a2]
+}
+
+function rk4(y: StateVector, cfg: PendulumConfig): StateVector {
+  const { dt } = cfg
+  const k1 = derivatives(y, cfg)
+  const k2 = derivatives(y.map((v,i) => v + 0.5*dt*k1[i]) as StateVector, cfg)
+  const k3 = derivatives(y.map((v,i) => v + 0.5*dt*k2[i]) as StateVector, cfg)
+  const k4 = derivatives(y.map((v,i) => v +    dt*k3[i]) as StateVector, cfg)
+  return y.map((v,i) => v + dt*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i])/6) as StateVector
+}
+```
+
+**Component**
+
+```ts
+export default function DoublePendulum({ config: configOverride, className, style }: DoublePendulumProps) {
+  const cfg = { ...DEFAULT_CONFIG, ...configOverride }
+
+  const svgRef  = useRef<SVGSVGElement>(null)
+  const arm1Ref = useRef<SVGLineElement>(null)
+  const arm2Ref = useRef<SVGLineElement>(null)
+  const bob1Ref = useRef<SVGCircleElement>(null)
+  const bob2Ref = useRef<SVGCircleElement>(null)
+  const stateRef = useRef<StateVector>([(cfg.theta1*Math.PI)/180, (cfg.theta2*Math.PI)/180, 0, 0])
+  const sizeRef  = useRef({ w: 0, h: 0 })
+
+  const tick = useCallback(() => {
+    for (let i = 0; i < cfg.substeps; i++) stateRef.current = rk4(stateRef.current, cfg)
+    const { w, h } = sizeRef.current
+    const [th1, th2] = stateRef.current
+    const { x1, y1, x2, y2 } = getPositions(th1, th2, w/2, h/2, cfg)
+    
+    // Direct setAttribute — zero React re-renders per frame
+    arm1Ref.current?.setAttribute('x2', String(x1)); arm1Ref.current?.setAttribute('y2', String(y1))
+    arm2Ref.current?.setAttribute('x1', String(x1)); arm2Ref.current?.setAttribute('y1', String(y1))
+    arm2Ref.current?.setAttribute('x2', String(x2)); arm2Ref.current?.setAttribute('y2', String(y2))
+    bob1Ref.current?.setAttribute('cx', String(x1)); bob1Ref.current?.setAttribute('cy', String(y1))
+    bob2Ref.current?.setAttribute('cx', String(x2)); bob2Ref.current?.setAttribute('cy', String(y2))
+    rafRef.current = requestAnimationFrame(tick)
+  }, [cfg])
+
+  useEffect(() => {
+    handleResize()
+    const ro = new ResizeObserver(handleResize)
+    if (svgRef.current?.parentElement) ro.observe(svgRef.current.parentElement)
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { ro.disconnect(); cancelAnimationFrame(rafRef.current) }
+  }, [handleResize, tick])
+
+  return (
+    <svg ref={svgRef} className={className} style={style}
+      aria-label="Double pendulum animation" aria-hidden="true">
+      <line ref={arm1Ref} stroke={cfg.arm1Color} strokeWidth={cfg.armStrokeWidth} strokeLinecap="round" />
+      <line ref={arm2Ref} stroke={cfg.arm2Color} strokeWidth={cfg.armStrokeWidth} strokeLinecap="round" />
+      <circle ref={pivotRef} r={cfg.pivotRadius} fill={cfg.pivotColor} />
+      <circle ref={bob1Ref} r={r1} fill={cfg.bob1Color} />
+      <circle ref={bob2Ref} r={r2} fill={cfg.bob2Color} />
+    </svg>
+  )
+}
+```

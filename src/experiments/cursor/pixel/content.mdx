@@ -1,0 +1,116 @@
+A PICO-8 inspired pixel trail that snaps to an 8px grid as you move. Click anywhere to scatter pixels outward with gravity and drag physics. 
+
+**Config**
+
+```ts
+const CONFIG = {
+  pixelSize:    8,        // size of each pixel block in px
+  trailLen:     22,       // trail ring buffer length
+  lerpSpeed:    0.18,     // cursor lerp speed (0–1)
+  fadeFrames:   35,       // frames a trail pixel lives
+  palette: [              // PICO-8 inspired color palette
+    '#ff004d', '#ff77a8', 
+    '#ffec27', '#00e436',
+    '#29adff', '#83769c', 
+    '#ff6c24', '#00b543',
+    '#ff0040', '#e8f1ff', 
+    '#ff3c96', '#7e2553',
+  ],
+  scatterCount: 18,       // pixels spawned per click
+  pixelMax:     200,      // pre-allocated pixel pool size
+}
+```
+
+**Types**
+
+```ts
+type Pixel = {
+  gx: number; gy: number 
+  vx: number; vy: number   
+  life: number; maxLife: number
+  color: string
+  isScatter: boolean
+  active: boolean
+}
+```
+
+**Component**
+
+```ts
+export default function CursorPixel() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return
+    const container = containerRef.current as HTMLDivElement
+    const canvas    = canvasRef.current    as HTMLCanvasElement
+    const ctx       = canvas.getContext('2d')!
+    ctx.imageSmoothingEnabled = false  // keeps pixel blocks crisp
+
+    const pixels: Pixel[] = Array.from({ length: CONFIG.pixelMax }, () => ({
+      gx:0, gy:0, vx:0, vy:0, life:0, maxLife:0, color:'', isScatter:false, active:false
+    }))
+    let pixHead = 0
+
+    function spawnPixel(gx: number, gy: number, isScatter: boolean) {
+      const p = pixels[pixHead]; pixHead = (pixHead + 1) % CONFIG.pixelMax
+      p.color     = CONFIG.palette[Math.floor(Math.random() * CONFIG.palette.length)]
+      p.isScatter = isScatter; p.gx = gx; p.gy = gy
+      if (isScatter) {
+        const angle = Math.random() * Math.PI * 2, spd = Math.random() * 5 + 2
+        p.vx = Math.cos(angle)*spd; p.vy = Math.sin(angle)*spd
+        p.maxLife = Math.random() * 20 + 15
+      } else { p.vx=0; p.vy=0; p.maxLife = CONFIG.fadeFrames + Math.floor(Math.random()*10) }
+      p.life = p.maxLife; p.active = true
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      lx += (cx - lx) * CONFIG.lerpSpeed; ly += (cy - ly) * CONFIG.lerpSpeed
+      const sgx = snap(lx, CONFIG.pixelSize), sgy = snap(ly, CONFIG.pixelSize)
+      if (sgx !== lastSnapX || sgy !== lastSnapY) { lastSnapX=sgx; lastSnapY=sgy; spawnPixel(sgx,sgy,false) }
+
+      for (const p of pixels) {
+        if (!p.active) continue
+        if (p.isScatter) { p.gx+=p.vx; p.gy+=p.vy; p.vy+=0.35; p.vx*=0.94 } // gravity + drag
+        if (--p.life <= 0) { p.active=false; continue }
+        const prog  = p.life / p.maxLife
+        ctx.globalAlpha = p.isScatter ? prog : prog*prog  // linear vs quadratic fade
+        ctx.fillStyle   = p.color
+        const drawX = p.isScatter ? Math.round(p.gx/CONFIG.pixelSize)*CONFIG.pixelSize : p.gx
+        const drawY = p.isScatter ? Math.round(p.gy/CONFIG.pixelSize)*CONFIG.pixelSize : p.gy
+        ctx.fillRect(drawX, drawY, CONFIG.pixelSize-1, CONFIG.pixelSize-1) // 1px gap = visible grid
+      }
+
+      ctx.globalAlpha = 1
+      for (let d=-2; d<=2; d++) {
+        if (d===0) continue
+        ctx.fillStyle='#ffffff'; ctx.globalAlpha=0.85
+        ctx.fillRect(sgx+d*CONFIG.pixelSize, sgy, CONFIG.pixelSize-1, CONFIG.pixelSize-1)
+        ctx.fillRect(sgx, sgy+d*CONFIG.pixelSize, CONFIG.pixelSize-1, CONFIG.pixelSize-1)
+      }
+      ctx.fillStyle='#ffec27'; ctx.globalAlpha=0.95
+      ctx.fillRect(sgx, sgy, CONFIG.pixelSize-1, CONFIG.pixelSize-1)
+      ctx.globalAlpha=1
+
+      rafId = requestAnimationFrame(loop)
+    }
+
+    loop()
+    return () => { cancelAnimationFrame(rafId); resizeObserver.disconnect() }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Cursor pixel — move to draw, click to scatter"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               backgroundColor:'#1c1b1b', borderRadius:'var(--radius-lg)',
+               overflow:'hidden', cursor:'none', imageRendering:'pixelated' }}>
+      <canvas ref={canvasRef} aria-hidden="true"
+        style={{ position:'absolute', top:0, left:0, pointerEvents:'none', imageRendering:'pixelated' }} />
+    </div>
+  )
+}
+```

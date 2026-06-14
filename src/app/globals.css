@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=La+Belle+Aurore&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Geist:wght@300;400;500&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #ECEBE7;
+  --color-ink: #000000;
+  --color-muted: #444444;
+  --color-subtle: #1a1a1a;
+  --color-border: #2a2a2a;
+
+  /* complementary */
+  --color-blue: #A2CFFE;
+  --color-pink: #FFE5EC;
+  --color-purple: #7A75C4;
+  --color-teal: #B0E0E6;
+
+  /* code block tokens */
+  --code-bg: #ECEBE7;
+  /* --code-border: #2a2a2a; */
+  --code-accent: #0000ee; /* keywords, strings, numbers, tags */
+  --code-ink: #000000; 
+  --code-prop: #FF0000;
+  --code-comment: #1a1a1a;
+
+  /* footer */
+  --color-footer-bg: #222222;
+  --color-footer-ink: #ffffff;
+
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-belle: 'La Belle Aurore', cursive;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-sans: 'Geist', system-ui, sans-serif;
+
+  /* type size */
+  --text-caption: 0.75rem;
+  --text-body: 0.875rem;
+  --text-sub: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5rem;
+  --text-hero: 3.5rem;
+
+  /*spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: 7rem;
+  --gutter: 2.8125rem;
+  --gutter-sm: 1.25rem;
+
+  /* layout  */
+  --page-max: 90rem;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-card: 16px;
+
+  /* motion  */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 380ms;
+  --duration-reveal: 700ms;
+}
+
+html {
+  font-size: clamp(14px, 1.111vw, 16px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--color-purple);
+  color: var(--color-bg)
+}
+
+/*  Page container */
+.page-container {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 0 var(--gutter-sm);
+  }
+}
+
+.dot-grid {
+  background-image: radial-gradient(circle, #000000 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* DRAG-ABLE CARD */
+.lab-card {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: var(--radius-card);
+  background: #ffffff;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    box-shadow var(--duration-base) var(--ease-reveal),
+    transform var(--duration-fast) var(--ease-reveal);
+}
+
+.lab-card:active {
+  cursor: grabbing;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.13),
+    0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* RADIO BTN*/
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color var(--duration-base) ease, background   var(--duration-base) ease;
+  cursor: pointer;
+}
+
+input[type="radio"]::after {
+  content: '';
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: transparent;
+  transition: background var(--duration-base) ease;
+}
+
+/* input[type="radio"]:checked {
+  border-color: var(--code-accent);
+}
+
+input[type="radio"]:checked::after {
+  background: var(--code-accent);
+} */
+
+input[type="radio"]:checked {
+  border-color: var(--color-ink);
+  background:   var(--color-ink);
+}
+
+input[type="radio"]:checked::after {
+  background: #ffffff;
+}
+
+/* CODE BLOCK TOKEN*/
+.token-keyword,
+.token-string,
+.token-number,
+.token-tag {
+  color: var(--code-accent);
+}
+
+.token-default,
+.token-function {
+  color: var(--code-ink);
+}
+
+.token-property,
+.token-attr {
+  color: var(--code-prop);
+}
+
+.token-comment {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+/* PANEL TRANSITION */
+.experiment-panel {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity var(--duration-slow) var(--ease-reveal),
+    transform var(--duration-slow) var(--ease-reveal);
+}
+
+.experiment-panel.experiment-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* EMAIL  INPUT */
+.email-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-muted);
+  outline: none;
+  font-family: var(--font-serif);
+  font-size: inherit;
+  color: var(--color-muted);
+  width: 100%;
+  padding-bottom: 0.35rem;
+  transition:
+    border-color var(--duration-base) ease,
+    color var(--duration-base) ease;
+}
+
+.email-input::placeholder {
+  color: var(--color-muted);
+  opacity: 0.6;
+}
+
+.email-input:focus {
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}

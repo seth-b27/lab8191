@@ -1,0 +1,119 @@
+An iridescent soap bubble that follows your cursor with squash, stretch, and organic perimeter wobble. Click to pop it — particles and expanding rings burst outward, then the bubble reforms.
+
+**Config**
+
+```ts
+const CONFIG = {
+  radius:       26,     // base bubble radius in px
+  lerpSpeed:    0.09,   // how fast the bubble chases the cursor
+  wobblePoints: 8,      // perimeter control points
+  wobbleAmt:    2.8,    // max wobble displacement in px
+  wobbleSpeed:  0.048,  // wobble animation speed
+  stretchAmt:   0.45,   // squash/stretch intensity from velocity
+  popParticles: 22,     // particles spawned on pop
+  popRingCount: 2,      // expanding rings spawned on pop
+}
+
+const COLOR: [number, number, number] = [120, 200, 255]
+```
+
+**Types**
+
+```ts
+type PopParticle = {
+  x: number; y: number
+  vx: number; vy: number
+  life: number; maxLife: number
+  r: number
+  active: boolean
+}
+
+type PopRing = {
+  x: number; y: number
+  r: number
+  life: number
+  active: boolean
+}
+```
+
+**Blob path**
+
+The bubble shape is drawn as a smooth closed Bézier curve through `N` perimeter points. Catmull-Rom inspired control points give the organic wobble. `ctx.scale()` applies squash/stretch along the movement direction before the path is built — caller fills or strokes, then calls `ctx.restore()`.
+
+```ts
+function buildBlobPath(
+  ctx:    CanvasRenderingContext2D,
+  cx:     number,
+  cy:     number,
+  radii:  Float32Array,
+  scaleX: number,
+  scaleY: number,
+  angle:  number,
+) {
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(angle)
+  ctx.scale(scaleX, scaleY)
+  ctx.rotate(-angle)
+
+  const pts: { x: number; y: number }[] = []
+  for (let i = 0; i < N; i++) {
+    const a = (Math.PI * 2 / N) * i - Math.PI / 2
+    pts.push({ x: Math.cos(a) * radii[i], y: Math.sin(a) * radii[i] })
+  }
+
+  const TENSION = 0.18
+  ctx.beginPath()
+  for (let i = 0; i < N; i++) {
+    const pr = pts[(i - 1 + N) % N]
+    const cu = pts[i]
+    const nx = pts[(i + 1) % N]
+    const n2 = pts[(i + 2) % N]
+    const c1x = cu.x + (nx.x - pr.x) * TENSION
+    const c1y = cu.y + (nx.y - pr.y) * TENSION
+    const c2x = nx.x - (n2.x - cu.x) * TENSION
+    const c2y = nx.y - (n2.y - cu.y) * TENSION
+    if (i === 0) ctx.moveTo(cu.x, cu.y)
+    ctx.bezierCurveTo(c1x, c1y, c2x, c2y, nx.x, nx.y)
+  }
+  ctx.closePath()
+  // ctx.restore() called by caller after fill/stroke
+}
+```
+
+**Component**
+
+```ts
+export default function CursorBubble() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return
+    const container = containerRef.current as HTMLDivElement
+    const canvas    = canvasRef.current    as HTMLCanvasElement
+    const ctxRaw    = canvas.getContext('2d')
+    if (!ctxRaw) return
+    const ctx = ctxRaw
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      rafId = requestAnimationFrame(loop)
+    }
+    loop()
+
+    return () => { cancelAnimationFrame(rafId); resizeObserver.disconnect() }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Cursor soap bubble — move your cursor, click to pop"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               backgroundColor:'#1c1b1b', borderRadius:'var(--radius-lg)',
+               overflow:'hidden', cursor:'none' }}>
+      <canvas ref={canvasRef} aria-hidden="true"
+        style={{ position:'absolute', top:0, left:0, pointerEvents:'none' }} />
+    </div>
+  )
+}
+```

@@ -1,0 +1,98 @@
+{/* src/experiments/cursor/lightning-bolt/content.mdx */}
+
+A lightning bolt simulation that auto-strikes the nearest anchor point as you move. Click to blast all anchors at once. Bolts are generated via midpoint displacement - each one is jagged and unique. Branches split off randomly at a set depth.
+
+**Config**
+
+```ts
+const CONFIG = {
+  anchorCount:     6,      // number of fixed anchor points
+  boltColor:       '180,210,255',
+  coreColor:       '240,250,255',
+  glowColor:       '100,160,255',
+  autoInterval:    35,     // frames between auto-bolts
+  boltLife:        10,     // frames a bolt stays visible
+  subdivDepth:     4,      // midpoint displacement recursion depth
+  branchChance:    0.45,   // probability a branch spawns per segment
+  branchDepth:     2,      // recursion depth at which branches form
+  jaggedness:      0.42,   // displacement intensity
+  boltMax:         12,     // bolt pool size
+  strikeParticles: 14,     // particles spawned per click strike
+  particleMax:     80,
+}
+```
+
+**Component**
+
+```ts
+export default function CursorLightningBolt() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return
+    const container = containerRef.current as HTMLDivElement
+    const canvas    = canvasRef.current    as HTMLCanvasElement
+    const ctxRaw    = canvas.getContext('2d')
+    if (!ctxRaw) return
+    const ctx = ctxRaw
+
+    function resize() {
+      canvas.width  = container.clientWidth
+      canvas.height = container.clientHeight
+    }
+    resize()
+    const resizeObserver = new ResizeObserver(() => { resize(); rebuildAnchors() })
+    resizeObserver.observe(container)
+
+    const anchors: { x: number; y: number }[] = []
+    function rebuildAnchors() {
+      anchors.length = 0
+      const W = canvas.width, H = canvas.height
+      for (let i = 0; i < CONFIG.anchorCount; i++)
+        anchors.push({ x: 40 + Math.random() * (W - 80), y: 40 + Math.random() * (H - 80) })
+    }
+    rebuildAnchors()
+
+    function midpointDisplace(x1, y1, x2, y2, depth, pts, allowBranch) {
+      if (depth === 0) { pts.push({ x: x2, y: y2 }); return }
+      const mx = (x1 + x2) * 0.5, my = (y1 + y2) * 0.5
+      const dx = x2 - x1, dy = y2 - y1
+      const len = Math.sqrt(dx * dx + dy * dy) || 1
+      const perpX = -dy / len, perpY = dx / len
+      const offset = (Math.random() - 0.5) * len * CONFIG.jaggedness
+      const jx = mx + perpX * offset, jy = my + perpY * offset
+      midpointDisplace(x1, y1, jx, jy, depth - 1, pts, allowBranch)
+      if (allowBranch && depth === CONFIG.branchDepth && Math.random() < CONFIG.branchChance) {
+        const branchLen   = len * 0.45
+        const branchAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.2
+        const bPts = [{ x: jx, y: jy }]
+        midpointDisplace(jx, jy, jx + Math.cos(branchAngle) * branchLen,
+                                  jy + Math.sin(branchAngle) * branchLen, depth - 2, bPts, false)
+        if (pts.length > 0) pts[pts.length - 1]._branch = bPts
+      }
+      midpointDisplace(jx, jy, x2, y2, depth - 1, pts, allowBranch)
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      // auto-bolt, draw anchors, update bolts + particles, cursor corona
+      rafId = requestAnimationFrame(loop)
+    }
+    loop()
+
+    return () => { cancelAnimationFrame(rafId); resizeObserver.disconnect() }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Cursor lightning bolt — move to auto-strike, click to strike all anchors"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               backgroundColor:'#06080f', borderRadius:'var(--radius-lg)',
+               overflow:'hidden', cursor:'none' }}>
+      <canvas ref={canvasRef} aria-hidden="true"
+        style={{ position:'absolute', top:0, left:0, pointerEvents:'none' }} />
+    </div>
+  )
+}
+```

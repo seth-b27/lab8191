@@ -1,0 +1,89 @@
+Type anything and watch a technical annotation skeleton appear over your text — cap-height guides, baseline rules, space markers, and left/right measurement arms, all drawn live in SVG as you type.
+
+**Config**
+
+```ts
+const FONT_SIZE   = 42
+const FONT_FAMILY = "'Instrument Serif', Georgia, serif"
+const BG          = '#ECEBE7'
+const PRIMARY     = '#1a1a1a'
+
+const PAD_LEFT   = 54
+const PAD_RIGHT  = 40
+const PAD_TOP    = 70
+const BOTTOM_PAD = 36
+
+const NODE_R_RATIO            = 0.055
+const SPACE_BAR_ABOVE_RATIO   = 0.22
+const BOTTOM_LINE_BELOW_RATIO = 0.32
+const LINE_SPACING            = 2.2
+const TAB_SPACES              = 4
+const MAX_LINE_WIDTH          = 800
+const MAX_CHARS               = 54
+```
+
+**Component**
+
+```ts
+export default function TypographicAnnotationEngine() {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const container = containerRef.current as HTMLDivElement
+
+    function render() {
+      ctx.font = `${FONT_SIZE}px ${FONT_FAMILY}`
+      const displayLines = wordWrap(ghost.value).split('\n')
+      const metrics      = displayLines.map(l => measureLine(l))
+      const maxWidth     = Math.max(...metrics.map(m => m.totalWidth))
+
+      svg.setAttribute('width', String(svgW))
+      svg.setAttribute('height', String(svgH))
+      svg.innerHTML = ''
+      displayLines.forEach((line, li) => drawRow(line, li, ...derivedMetrics))
+   
+      ghost.style.width    = svgW + 'px'
+      ghost.style.height   = svgH + 'px'
+      ghost.style.fontSize = FONT_SIZE + 'px'
+    }
+
+    ghost.addEventListener('input', function() {
+      if (ghost.value.length > MAX_CHARS) {
+        const pos   = ghost.selectionStart
+        ghost.value = ghost.value.slice(0, MAX_CHARS)
+        ghost.selectionStart = ghost.selectionEnd = Math.min(pos, MAX_CHARS)
+      }
+      render()
+    })
+
+    ghost.addEventListener('keydown', function(e) {
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        const start  = this.selectionStart
+        const spaces = ' '.repeat(TAB_SPACES)
+        this.value   = this.value.slice(0, start) + spaces + this.value.slice(start)
+        this.selectionStart = this.selectionEnd = start + TAB_SPACES
+        render()
+      }
+    })
+
+    document.fonts.ready.then(render)
+
+    return () => {
+      ghost.removeEventListener('input',   render)
+      ghost.removeEventListener('keydown', render)
+      container.removeChild(stage)
+      container.removeChild(measureCanvas)
+    }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Typographic annotation engine — type to see annotations"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               backgroundColor: BG, borderRadius:'var(--radius-lg)',
+               overflow:'auto', padding:'4rem' }} />
+  )
+}
+```

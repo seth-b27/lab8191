@@ -1,0 +1,112 @@
+{/* src/experiments/simulation/falling-letter/content.mdx */}
+
+Hover a letter to drop it with physics. Click or tap anywhere to drop them all at once. Fast drags push nearby fallen letters outward.
+
+**Config**
+
+```ts
+const WORD        = 'welcome to lab 8191 '
+const FONT_SIZE   = 64
+const FONT_FAMILY = "'Geist', system-ui, sans-serif"
+const LETTER_GAP  = 2       
+const PAD_X       = 24
+const PAD_Y       = 24
+const BG          = '#ECEBE7'
+const LETTER_COLOR = '#0000EE'
+```
+
+**Types**
+
+```ts
+type LetterData = {
+  el:      HTMLSpanElement
+  bx:      number; by: number   
+  bw:      number; bh: number   
+  body:    any                  // Matter.js body (null until dropped)
+  fallen:  boolean
+  isSpace: boolean
+}
+```
+
+**Component**
+
+```ts
+export default function FallingLetter() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const cleanupRef   = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const container = containerRef.current as HTMLDivElement
+
+    function init() {
+      const { Engine, World, Bodies, Body, Runner, Mouse, MouseConstraint, Events }
+        = (window as any).Matter
+
+      const engine = Engine.create({ enableSleeping: true })
+      engine.world.gravity.y = 1.2
+      World.add(engine.world, [
+        Bodies.rectangle(W / 2, H + 25,  W, 50, { isStatic: true }),  // floor
+        Bodies.rectangle(-25,   H / 2,  50,  H, { isStatic: true }),  // left
+        Bodies.rectangle(W + 25, H / 2, 50,  H, { isStatic: true }),  // right
+      ])
+
+      const mc = MouseConstraint.create(engine, {
+        mouse: Mouse.create(container),
+        constraint: { stiffness: 0.2, render: { visible: false } },
+      })
+      World.add(engine.world, mc)
+
+      Events.on(mc, 'mousemove', () => {
+        const speed = Math.sqrt(mvx ** 2 + mvy ** 2)
+        if (speed < 2) return
+        letters.forEach(l => {
+          if (!l.body || !l.fallen) return
+          const dist = Math.hypot(l.body.position.x - dragged.position.x,
+                                   l.body.position.y - dragged.position.y)
+          if (dist > pushRadius) return
+          const falloff = 1 - dist / pushRadius
+          const force   = speed * 0.0014 * falloff * falloff
+          Body.applyForce(l.body, l.body.position, { x: nx * force, y: ny * force })
+        })
+      })
+
+      function syncLoop() {
+        letters.forEach(l => {
+          if (!l.body) return
+          l.el.style.left      = `${l.body.position.x}px`
+          l.el.style.top       = `${l.body.position.y}px`
+          l.el.style.transform = `translate(-50%,-50%) rotate(${l.body.angle}rad)`
+        })
+        rafId = requestAnimationFrame(syncLoop)
+      }
+
+      const runner = Runner.create()
+      Runner.run(runner, engine)
+      syncLoop()
+
+      cleanupRef.current = () => {
+        cancelAnimationFrame(rafId)
+        Runner.stop(runner)
+        World.clear(engine.world, false)
+        Engine.clear(engine)
+      }
+    }
+
+    const script = document.createElement('script')
+    script.src   = 'https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js'
+    script.addEventListener('load', init)
+    document.head.appendChild(script)
+
+    return () => { cleanupRef.current?.() }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Falling letters - hover a letter to drop it, click to drop all"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               backgroundColor: BG, borderRadius:'var(--radius-lg)',
+               overflow:'hidden', cursor:'default', touchAction:'none' }} />
+  )
+}
+```

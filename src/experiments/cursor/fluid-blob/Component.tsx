@@ -1,0 +1,262 @@
+'use client'
+import { useEffect, useRef } from 'react'
+
+const CONFIG = {
+    points: 8,
+    baseRadius: 28,
+    lerpPos: 0.10,
+    lerpRadius: 0.18,
+    stretchAmt: 0.55,
+    wobbleAmt: 2.2,
+    wobbleSpeed: 0.055,
+    color: '120,80,255',
+    trailCount: 6,
+}
+
+const N = CONFIG.points
+
+export default function CursorFluidBlob() {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const canvasRef    = useRef<HTMLCanvasElement>(null)
+
+    useEffect(() => {
+        if (!containerRef.current || !canvasRef.current) return
+
+        const container = containerRef.current as HTMLDivElement
+        const canvas    = canvasRef.current    as HTMLCanvasElement
+        const ctxRaw    = canvas.getContext('2d')
+        if (!ctxRaw) return
+        const ctx = ctxRaw
+
+        //  Resize canvas to container 
+        function resize() {
+            canvas.width  = container.clientWidth
+            canvas.height = container.clientHeight
+        }
+        resize()
+
+        const resizeObserver = new ResizeObserver(resize)
+        resizeObserver.observe(container)
+
+        let bx = -999, by = -999
+        let prevBx = -999, prevBy = -999
+
+        const pointR = new Float32Array(N).fill(CONFIG.baseRadius)
+        const pointPhase = new Float32Array(N)
+        for (let i = 0; i < N; i++) {
+            pointPhase[i] = (Math.PI * 2 / N) * i * 3.1  // prime multiplier spreads phases
+        }
+
+        const trailX = new Float32Array(CONFIG.trailCount).fill(-999)
+        const trailY = new Float32Array(CONFIG.trailCount).fill(-999)
+
+        let trailHead = 0
+        let time = 0
+        let rafId = 0
+        const cursor = { x: -999, y: -999 }
+        let moved    = false
+
+        function onMouseMove(e: MouseEvent) {
+            const rect = container.getBoundingClientRect()
+            cursor.x   = e.clientX - rect.left
+            cursor.y   = e.clientY - rect.top
+
+            if (!moved) {
+                moved = true
+                // Snap blob to cursor on first move —
+                // prevents fly-in from -999
+                bx = cursor.x
+                by = cursor.y
+            }
+        }
+
+        function onTouchMove(e: TouchEvent) {
+            const rect = container.getBoundingClientRect()
+            cursor.x   = e.touches[0].clientX - rect.left
+            cursor.y   = e.touches[0].clientY - rect.top
+        }
+
+        function onTouchStart(e: TouchEvent) {
+            const rect = container.getBoundingClientRect()
+            cursor.x   = e.touches[0].clientX - rect.left
+            cursor.y   = e.touches[0].clientY - rect.top
+            bx = cursor.x
+            by = cursor.y
+            moved = true
+        }
+
+        container.addEventListener('mousemove',  onMouseMove)
+        container.addEventListener('touchmove',  onTouchMove,  { passive: true })
+        container.addEventListener('touchstart', onTouchStart, { passive: true })
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+            if (!moved) {
+                ctx.fillStyle    = '#888'
+                ctx.font         = '13px Arial, sans-serif'
+                ctx.textAlign    = 'center'
+                ctx.textBaseline = 'middle'
+                ctx.fillText('Move your cursor here', canvas.width / 2, canvas.height / 2)
+                rafId = requestAnimationFrame(loop)
+                return
+            }
+
+            time += CONFIG.wobbleSpeed
+            prevBx = bx; prevBy = by
+            bx += (cursor.x - bx) * CONFIG.lerpPos
+            by += (cursor.y - by) * CONFIG.lerpPos
+
+            
+            const velX      = bx - prevBx
+            const velY      = by - prevBy
+            const speed     = Math.sqrt(velX * velX + velY * velY)
+            const moveAngle = Math.atan2(velY, velX)
+
+            const stretch  = Math.min(speed * CONFIG.stretchAmt, 16)
+            const stretchX = 1 + stretch / CONFIG.baseRadius
+            const stretchY = 1 - (stretch / CONFIG.baseRadius) * 0.5
+
+            trailX[trailHead] = bx
+            trailY[trailHead] = by
+            trailHead = (trailHead + 1) % CONFIG.trailCount
+
+            for (let i = 0; i < N; i++) {
+                pointPhase[i] += 0.04 + i * 0.003  // each point at slightly different rate
+                const wobbled = CONFIG.baseRadius + Math.sin(pointPhase[i] + time) * CONFIG.wobbleAmt
+                pointR[i] += (wobbled - pointR[i]) * CONFIG.lerpRadius
+            }
+
+            for (let t = 0; t < CONFIG.trailCount; t++) {
+                const idx   = (trailHead + t) % CONFIG.trailCount
+                const tx    = trailX[idx]
+                const ty    = trailY[idx]
+
+                if (tx < -900) continue  // slot not yet written — skip
+
+                const frac  = t / CONFIG.trailCount  // 0 = oldest, 1 = newest
+                const alpha = frac * 0.15             // oldest ~0, newest ~0.15
+                const scale = 0.55 + frac * 0.45      // oldest 55% size, newest 100%
+
+                // Build perimeter points
+                const pts: { x: number; y: number }[] = []
+                for (let i = 0; i < N; i++) {
+                    const a = (Math.PI * 2 / N) * i - Math.PI / 2
+                    pts.push({ x: Math.cos(a) * pointR[i], y: Math.sin(a) * pointR[i] })
+                }
+
+                ctx.save()
+                ctx.translate(tx, ty)
+                ctx.scale(scale, scale)
+                ctx.globalAlpha = alpha
+
+                ctx.beginPath()
+                for (let i = 0; i < N; i++) {
+                    const prev  = pts[(i - 1 + N) % N]
+                    const cur   = pts[i]
+                    const next  = pts[(i + 1) % N]
+                    const next2 = pts[(i + 2) % N]
+                    const cp1x  = cur.x  + (next.x  - prev.x)  * 0.18
+                    const cp1y  = cur.y  + (next.y  - prev.y)  * 0.18
+                    const cp2x  = next.x - (next2.x - cur.x)   * 0.18
+                    const cp2y  = next.y - (next2.y - cur.y)   * 0.18
+                    if (i === 0) ctx.moveTo(cur.x, cur.y)
+                    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, next.x, next.y)
+                }
+                ctx.closePath()
+                ctx.fillStyle = `rgb(${CONFIG.color})`
+                ctx.fill()
+                ctx.restore()
+            }
+
+            ctx.save()
+            ctx.translate(bx, by)
+            ctx.rotate(moveAngle)
+            ctx.scale(stretchX, stretchY)
+            ctx.rotate(-moveAngle)
+
+            // Build perimeter points
+            const pts: { x: number; y: number }[] = []
+            for (let i = 0; i < N; i++) {
+                const a = (Math.PI * 2 / N) * i - Math.PI / 2
+                pts.push({ x: Math.cos(a) * pointR[i], y: Math.sin(a) * pointR[i] })
+            }
+
+            // Build smooth bezier path
+            ctx.beginPath()
+            for (let i = 0; i < N; i++) {
+                const prev  = pts[(i - 1 + N) % N]
+                const cur   = pts[i]
+                const next  = pts[(i + 1) % N]
+                const next2 = pts[(i + 2) % N]
+                const cp1x  = cur.x  + (next.x  - prev.x)  * 0.18
+                const cp1y  = cur.y  + (next.y  - prev.y)  * 0.18
+                const cp2x  = next.x - (next2.x - cur.x)   * 0.18
+                const cp2y  = next.y - (next2.y - cur.y)   * 0.18
+                if (i === 0) ctx.moveTo(cur.x, cur.y)
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, next.x, next.y)
+            }
+            ctx.closePath()
+
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, CONFIG.baseRadius * 1.5)
+            grad.addColorStop(0,    `rgba(${CONFIG.color},0.95)`)
+            grad.addColorStop(0.55, `rgba(${CONFIG.color},0.78)`)
+            grad.addColorStop(1,    `rgba(${CONFIG.color},0.0)`)
+            ctx.fillStyle = grad
+            ctx.fill()
+
+            ctx.beginPath()
+            ctx.arc(
+                -CONFIG.baseRadius * 0.22,
+                -CONFIG.baseRadius * 0.22,
+                 CONFIG.baseRadius * 0.28,
+                 0, Math.PI * 2,
+            )
+            ctx.fillStyle = 'rgba(255,255,255,0.20)'
+            ctx.fill()
+
+            ctx.restore()
+
+            rafId = requestAnimationFrame(loop)
+        }
+
+        loop()
+
+        //  Cleanup on unmount 
+        return () => {
+            cancelAnimationFrame(rafId)
+            resizeObserver.disconnect()
+            container.removeEventListener('mousemove',  onMouseMove)
+            container.removeEventListener('touchmove',  onTouchMove)
+            container.removeEventListener('touchstart', onTouchStart)
+        }
+    }, [])
+
+    return (
+        <div
+            ref={containerRef}
+            aria-label="Cursor fluid blob interactive preview — move your cursor to see the blob follow"
+            style={{
+                position:        'relative',
+                width:           '100%',
+                height:          '100%',
+                minHeight:       '320px',
+                backgroundColor: '#1c1b1b',
+                borderRadius:    'var(--radius-lg)',
+                overflow:        'hidden',
+                cursor:          'none',
+            }}
+        >
+            <canvas
+                ref={canvasRef}
+                aria-hidden="true"
+                style={{
+                    position:      'absolute',
+                    top:           0,
+                    left:          0,
+                    pointerEvents: 'none',
+                }}
+            />
+        </div>
+    )
+}

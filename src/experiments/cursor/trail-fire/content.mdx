@@ -1,0 +1,127 @@
+{/* src/experiments/cursor/trail-fire/content.mdx */}
+
+A particle trail that rises and fades like fire following your cursor. Instead of `clearRect`, each frame is covered with a semi-transparent white fill; this smears the previous frame slightly, giving a natural ember-fading look with zero extra draw calls.
+
+**Config**
+
+```ts
+const CONFIG = {
+  spawnPerFrame: 3,     // particles created per frame while moving
+  maxParticles:  150,   // hard cap — oldest recycled first
+  baseRadius:    5,     // starting size of each particle in px
+  riseSpeed:     1.8,   // base upward velocity
+  spread:        10,    // horizontal spawn scatter in px
+  flicker:       0.28,  // random horizontal wobble per frame
+  gravity:      -0.04,  // upward acceleration (negative = up)
+}
+```
+
+**Color lookup**
+
+```ts
+const COLOR_STEPS = [
+  'rgba(220,180,255,1)',   
+  'rgba(200,120,255,0.9)', 
+  'rgba(150,80,200,0.75)',
+  'rgba(100,40,150,0.45)', 
+]
+
+function getColor(progress: number): string {
+  if (progress >= 0.75) return COLOR_STEPS[0]
+  if (progress >= 0.50) return COLOR_STEPS[1]
+  if (progress >= 0.25) return COLOR_STEPS[2]
+  return COLOR_STEPS[3]
+}
+```
+
+**Component**
+
+```ts
+export default function CursorTrailFire() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const container = containerRef.current as HTMLDivElement
+    const canvas    = canvasRef.current    as HTMLCanvasElement
+    const ctx       = canvas.getContext('2d')!
+
+    function resize() {
+      canvas.width  = container.clientWidth
+      canvas.height = container.clientHeight
+    }
+    resize()
+    new ResizeObserver(resize).observe(container)
+
+    const pool: Particle[] = []
+    let poolHead = 0
+    for (let i = 0; i < CONFIG.maxParticles; i++)
+      pool.push({ x:0, y:0, vx:0, vy:0, life:0, maxLife:0, radius:0, active:false })
+
+    function spawnParticle(x: number, y: number) {
+      const p  = pool[poolHead]
+      poolHead = (poolHead + 1) % CONFIG.maxParticles
+      p.x       = x + (Math.random() - 0.5) * CONFIG.spread
+      p.y       = y
+      p.vx      = (Math.random() - 0.5) * 1.0
+      p.vy      = -(Math.random() * CONFIG.riseSpeed + 1.0)
+      p.maxLife = Math.random() * 25 + 35
+      p.life    = p.maxLife
+      p.radius  = Math.random() * 3 + CONFIG.baseRadius
+      p.active  = true
+    }
+
+    const cursor = { x: 0, y: 0 }
+    let moved = false, rafId = 0
+
+    container.addEventListener('mousemove', (e) => {
+      const rect = container.getBoundingClientRect()
+      cursor.x = e.clientX - rect.left
+      cursor.y = e.clientY - rect.top
+      if (!moved) moved = true
+    })
+
+    function loop() {
+      ctx.fillStyle = '#1c1b1b'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      if (moved)
+        for (let i = 0; i < CONFIG.spawnPerFrame; i++)
+          spawnParticle(cursor.x, cursor.y)
+
+      for (let i = 0; i < pool.length; i++) {
+        const p = pool[i]
+        if (!p.active) continue
+        p.x  += p.vx
+        p.y  += p.vy
+        p.vy += CONFIG.gravity
+        p.vx += (Math.random() - 0.5) * CONFIG.flicker
+        p.life--
+        if (p.life <= 0) { p.active = false; continue }
+        const progress = p.life / p.maxLife
+        const r        = p.radius * progress
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, Math.max(r, 0.5), 0, Math.PI * 2)
+        ctx.fillStyle = getColor(progress)
+        ctx.fill()
+      }
+
+      rafId = requestAnimationFrame(loop)
+    }
+    loop()
+
+    return () => { cancelAnimationFrame(rafId) }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Cursor trail fire interactive preview — move your cursor to see the particle trail"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               , borderRadius:'var(--radius-lg)',
+               overflow:'hidden', cursor:'default' }}>
+      <canvas ref={canvasRef} aria-hidden="true"
+        style={{ position:'absolute', top:0, left:0, pointerEvents:'none' }} />
+    </div>
+  )
+}
+```

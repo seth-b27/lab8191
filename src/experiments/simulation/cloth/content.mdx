@@ -1,0 +1,114 @@
+{/* src/experiments/simulation/cloth/content.mdx */}
+
+A cloth mesh built with Verlet integration and iterative constraint solving. The top row is pinned - drag any free point to pull and drape the fabric. Press R to reset. 
+
+**Config**
+
+```ts
+const CONFIG = {
+  restDist:   22,     // resting distance between points in px
+  gravity:    1200,   // downward acceleration
+  damping:    0.982,  // velocity retention per frame (1 = no damping)
+  iterations: 3,      // constraint solver passes per frame
+  stiffness:  0.1,    // constraint correction strength
+  snapRadius: 36,     // px — grab radius around nearest point
+  maxCols:    22,     // caps cloth width regardless of container size
+  maxRows:    10,     // caps cloth height regardless of container size
+}
+```
+
+**Types**
+
+```ts
+class Point {
+  x: number;  y: number   
+  px: number; py: number  
+  pinned: boolean
+  pinX: number; pinY: number
+
+  update(dt: number, w: number, h: number) {
+    if (this.pinned) { this.x = this.pinX; this.y = this.pinY; return }
+    const vx = (this.x - this.px) * CONFIG.damping
+    const vy = (this.y - this.py) * CONFIG.damping
+    this.px = this.x; this.py = this.y
+    this.x += vx; this.y += vy + CONFIG.gravity * dt * dt
+    // wall + floor bounds
+  }
+}
+
+class Constraint {
+  a: Point; b: Point; rest: number
+
+  resolve(grabbed: Point | null) {
+    const dx = this.b.x - this.a.x, dy = this.b.y - this.a.y
+    const d  = Math.hypot(dx, dy) || 0.0001
+    const diff = ((d - this.rest) / d) * CONFIG.stiffness * 0.5
+    const ox = dx * diff, oy = dy * diff
+    const aF = this.a.pinned || this.a === grabbed
+    const bF = this.b.pinned || this.b === grabbed
+    if      (!aF && !bF) { this.a.x += ox; this.a.y += oy; this.b.x -= ox; this.b.y -= oy }
+    else if (!aF)        { this.a.x += ox * 2; this.a.y += oy * 2 }
+    else if (!bF)        { this.b.x -= ox * 2; this.b.y -= oy * 2 }
+  }
+}
+```
+
+**Component**
+
+```ts
+export default function ClothSimulation() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return
+    const container = containerRef.current as HTMLDivElement
+    const canvas    = canvasRef.current    as HTMLCanvasElement
+    const ctx       = canvas.getContext('2d')!
+
+    function build() {
+      const W = canvas.width, H = canvas.height
+      const cols = Math.min(Math.floor((W - 40) / REST), CONFIG.maxCols)
+      const rows = Math.min(Math.floor((H - 80) / REST), CONFIG.maxRows)
+      const sx   = (W - (cols - 1) * REST) / 2   // center horizontally
+
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const p = new Point(sx + c * REST, 50 + r * REST)
+        if (r === 0) { p.pinned = true; p.pinX = p.x; p.pinY = p.y }
+        points.push(p)
+      }
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        if (c < cols-1) constraints.push(new Constraint(P(r,c), P(r,c+1)))
+        if (r < rows-1) constraints.push(new Constraint(P(r,c), P(r+1,c)))
+      }
+    }
+
+    function loop(now: number) {
+      rafId = requestAnimationFrame(loop)
+      const dt = Math.min((now - last) / 1000, 0.032); last = now
+      for (const p of points) if (p !== grabbed) p.update(dt, W, H)
+      for (let i = 0; i < CONFIG.iterations; i++) {
+        if (grabbed) { grabbed.x = mouseX; grabbed.y = mouseY }
+        for (const k of constraints) k.resolve(grabbed)
+      }
+      ctx.fillStyle = '#ECEBE7'; ctx.fillRect(0, 0, W, H)
+      ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 0.8
+      ctx.beginPath()
+      for (const k of structural) { ctx.moveTo(k.a.x, k.a.y); ctx.lineTo(k.b.x, k.b.y) }
+      ctx.stroke()
+    }
+
+    build(); rafId = requestAnimationFrame(loop)
+    return () => { cancelAnimationFrame(rafId); resizeObserver.disconnect() }
+  }, [])
+
+  return (
+    <div ref={containerRef} tabIndex={0}
+      aria-label="Cloth simulation — drag to pull the cloth, press R to reset"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               overflow:'hidden', outline:'none' }}>
+      <canvas ref={canvasRef} aria-hidden="true" style={{ display:'block' }} />
+    </div>
+  )
+}
+```

@@ -1,0 +1,108 @@
+A pool of landscape photos that appear and fade as the cursor moves. Each image pops in scaled up, holds briefly, then fades out - creating a layered trail of overlapping photos with random rotation.
+
+**Config**
+
+```ts
+const CONFIG = {
+  images:          [],    // image path here
+  maxImages:       10,
+  distance:        25,    // min cursor travel (px) before next image
+  fadeInDuration:  120,   // ms - quick pop-in
+  fadeOutDelay:    600,   // ms - lingers briefly before fading
+  fadeOutDuration: 400,   // ms - smooth fade out
+  scaleIn:         0.85,  // starting scale on appear
+  scaleOut:        0.72,  // ending scale on disappear
+  maxRotate:       12,    // max random rotation in degrees (±)
+  imgW:            112,   // px
+  imgH:            144,   // px
+}
+```
+
+**Types**
+
+```ts
+interface TrailImg extends HTMLImageElement {
+  _fadeTimer?: ReturnType<typeof setTimeout>
+}
+```
+
+**Component**
+
+```ts
+export default function CursorImgTrail() {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const container = containerRef.current as HTMLDivElement
+
+    let poolIndex = 0, imgIndex = 0
+    let lastX = -999, lastY = -999
+    const pool: TrailImg[] = []
+
+    for (let i = 0; i < CONFIG.maxImages; i++) {
+      const img = document.createElement('img') as TrailImg
+      img.draggable = false
+      img.alt       = ''
+      img.src       = CONFIG.images[i % CONFIG.images.length]
+      Object.assign(img.style, {
+        position: 'absolute', pointerEvents: 'none',
+        opacity: '0', width: `${CONFIG.imgW}px`, height: `${CONFIG.imgH}px`,
+      })
+      container.appendChild(img)
+      pool.push(img)
+    }
+
+    function spawnImage(x: number, y: number) {
+      const img    = pool[poolIndex]
+      poolIndex    = (poolIndex + 1) % CONFIG.maxImages
+      const src    = CONFIG.images[imgIndex % CONFIG.images.length]
+      imgIndex     = (imgIndex + 1) % CONFIG.images.length
+      const rotate = (Math.random() - 0.5) * 2 * CONFIG.maxRotate
+
+      if (img.src !== src) img.src = src
+      clearTimeout(img._fadeTimer)
+
+      img.style.transition = 'none'
+      img.style.left       = `${x - CONFIG.imgW / 2}px`
+      img.style.top        = `${y - CONFIG.imgH / 2}px`
+      img.style.opacity    = '0'
+      img.style.transform  = `rotate(${rotate}deg) scale(${CONFIG.scaleIn})`
+      img.getBoundingClientRect() 
+      img.style.transition = `opacity ${CONFIG.fadeInDuration}ms ease-out,
+                               transform ${CONFIG.fadeInDuration}ms ease-out`
+      img.style.opacity    = '1'
+      img.style.transform  = `rotate(${rotate}deg) scale(1)`
+
+      img._fadeTimer = setTimeout(() => {
+        img.style.transition = `opacity ${CONFIG.fadeOutDuration}ms ease-in,
+                                 transform ${CONFIG.fadeOutDuration}ms ease-in`
+        img.style.opacity    = '0'
+        img.style.transform  = `rotate(${rotate}deg) scale(${CONFIG.scaleOut})`
+      }, CONFIG.fadeOutDelay)
+    }
+
+    function onMove(x: number, y: number) {
+      const dist = Math.sqrt((x - lastX) ** 2 + (y - lastY) ** 2)
+      if (dist >= CONFIG.distance) { spawnImage(x, y); lastX = x; lastY = y }
+    }
+
+    container.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect()
+      onMove(e.clientX - rect.left, e.clientY - rect.top)
+    })
+
+    return () => {
+      pool.forEach(img => { clearTimeout(img._fadeTimer); container.removeChild(img) })
+    }
+  }, [])
+
+  return (
+    <div ref={containerRef}
+      aria-label="Cursor image trail — move your cursor to scatter photos"
+      style={{ position:'relative', width:'100%', minHeight:'320px',
+               backgroundColor:'#000000', borderRadius:'var(--radius-lg)',
+               overflow:'hidden', cursor:'none' }} />
+  )
+}
+```
