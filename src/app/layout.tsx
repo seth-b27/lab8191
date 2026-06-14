@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -6,7 +7,7 @@ export const metadata: Metadata = {
         template: '%s | lab 8191',
         default: 'lab 8191',
     },
-    description: 'Lab 8191 is a collection of some interactively cliché UI components you have probably already seen.',
+    description: 'Lab 8191 is an archive of interactive UI components you have probably already seen.',
     icons: {
         icon: '/favicon.ico',
     },
@@ -34,6 +35,7 @@ export default function RootLayout({
             <body>
 
                 {children}
+                <Analytics />
             </body>
         </html>
     )
