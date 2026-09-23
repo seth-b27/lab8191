@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { Analytics } from '@vercel/analytics/next'
 
 const siteTitle = 'Lab 8191';
 const sitedescription = 'Lab 8191 is an archive of interactive UI components you have probably seen before.';
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: {
             
             <body>
                 {children}
+                <Analytics/>
             </body>
         </html>
     )

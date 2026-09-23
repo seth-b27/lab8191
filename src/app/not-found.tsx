@@ -33,6 +33,7 @@ export default function NotFound() {
                         lineHeight: 1.7,
                         color: 'var(--color-muted)',
                         marginTop: 'var(--space-md)',
+                        width: '100%',
                         maxWidth: '64ch',
                     }}
                 >
