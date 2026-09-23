@@ -11,7 +11,24 @@ export const metadata: Metadata = {
         default: siteTitle,
     },
     description: sitedescription,
-    icons: '/favicon-2.svg'
+    icons: '/favicon-2.svg',
+    openGraph: {
+        title: siteTitle,
+        description: sitedescription,
+        url: 'https://lab8191.vercel.app/',
+        images: [{
+            url: 'https://lab8191.vercel.app/openGraph.jpg',
+            width: 1200,
+            height: 630,
+            alt: 'Lab 8191',
+        }],
+        type: 'website'
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: siteTitle,
+        images: ['https://lab8191.vercel.app/openGraph.jpg'],
+    },
 }
 
 export default function RootLayout({ children }: {
@@ -27,10 +44,10 @@ export default function RootLayout({ children }: {
                     crossOrigin="anonymous"
                 />
             </head>
-            
+
             <body>
                 {children}
-                <Analytics/>
+                <Analytics />
             </body>
         </html>
     )
