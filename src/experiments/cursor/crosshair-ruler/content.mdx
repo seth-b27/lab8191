@@ -1,0 +1,35 @@
+A crosshair that tracks the pointer, horizontal and vertical guide lines with a live coordinate readout near the cursor.
+
+
+**Usage**
+
+```tsx
+import CrosshairRuler from './CrosshairRuler'
+
+<CrosshairRuler
+  accentColor="#000000"
+  showCoordinates={true}
+  lerpSpeed={0.22}
+  fontFamily="'JetBrains Mono', ui-monospace, monospace"
+  fontSize={11}
+>
+  <Content/>
+</CrosshairRuler>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `accentColor` | `string` | `'#000000'` | Color of the crosshair lines & coordinate label |
+| `showCoordinates` | `boolean` | `true` | Whether the live x, y readout is shown next to the cursor |
+| `lerpSpeed` | `number` | `0.22` | How quickly the crosshair eases toward the pointer (0 to 1, higher is snappier) |
+| `fontFamily` | `string` | `"JetBrains Mono"` | Font used for the coordinate label |
+| `fontSize` | `number` | `11` | Font size of the coordinate label, in pixels |
+| `className` | `string` | `''` | Optional class applied to the wrapping container |
+| `style` | `CSSProperties` | undefined | Optional inline styles merged onto the container |
+| `children` | `ReactNode` | undefined | Content the crosshair overlay renders on top of |
+
+**Component**
+
+<CodeFrom file="cursor/crosshair-ruler/Component.tsx" />

@@ -1,0 +1,45 @@
+A pool of landscape photos that appear and fade as the cursor moves. 
+Each image pops in scaled up, holds briefly, then fades out - creating a layered trail of overlapping photos with random rotation.
+
+**Usage**
+
+```tsx
+import CursorImgTrail from './CursorImgTrail'
+
+<CursorImgTrail
+  images={[
+    'https://images.unsplash.com/photo-1656878564120-ab988c47f0b5?&q=60&w=3000',
+    // other images here
+  ]}
+  maxImages={10}
+  distance={25}
+  fadeInDuration={120}
+  fadeOutDelay={600}
+  fadeOutDuration={400}
+  scaleIn={0.85}
+  scaleOut={0.72}
+  maxRotate={12}
+  imgW={112}
+  imgH={144}
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `images` | `string[]` | 10 photo URLs | Image URLs cycled through as the trail spawns |
+| `maxImages` | `number` | `10` | Number of DOM image elements kept alive and reused |
+| `distance` | `number` | `25` | Min pointer travel in pixels before a new image spawns |
+| `fadeInDuration` | `number` | `120` | How long an image takes to fade and scale in, in ms |
+| `fadeOutDelay` | `number` | `600` | How long an image holds fully visible before it starts fading out, in ms |
+| `fadeOutDuration` | `number` | `400` | How long an image takes to fade and scale out, in ms |
+| `scaleIn` | `number` | `0.85` | Starting scale of an image as it fades in |
+| `scaleOut` | `number` | `0.72` | Ending scale of an image as it fades out |
+| `maxRotate` | `number` | `12` | Max random rotation in degrees, in either direction |
+| `imgW` | `number` | `112` | Width of each image in pixels |
+| `imgH` | `number` | `144` | Height of each image in pixels |
+
+**Component**
+
+<CodeFrom file="cursor/img-trail/Component.tsx" />

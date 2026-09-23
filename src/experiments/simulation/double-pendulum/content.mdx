@@ -1,0 +1,41 @@
+A double pendulum using 4th-order Runge-Kutta (RK4) integration. Fully deterministic - same initial angles always produce the same trajectory. 
+
+**Usage**
+
+```tsx
+import DoublePendulum from './DoublePendulum'
+
+// Use default config as is
+<DoublePendulum/>
+
+// Override any subset of PendulumConfig 
+<DoublePendulum config={{ gravity: 20, m1: 1.2, bob1Color: '#0000ee'}}/>
+```
+
+**Config**
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `theta1`, `theta2` | `number` | `90`, `180` | Initial angle of each arm, in degrees |
+| `m1`, `m2` | `number` | `0.6` | Mass of each bob |
+| `l1`, `l2` | `number` | `0.6` | Length of each arm, in simulation units |
+| `gravity` | `number` | `9.81` | Gravitational acceleration used in the simulation |
+| `dt` | `number` | `0.008` | Integration timestep, in seconds |
+| `substeps` | `number` | `2` | Number of RK4 steps run per animation frame |
+| `scale` | `number` | `100` | Pixels per simulation unit |
+| `bobBaseRadius` | `number` | `6` | Base radius of each bob in pixels, before mass scaling |
+| `bobMassScale` | `number` | `3` | How much a bob's mass adds to its drawn radius |
+| `pivotColor` | `string` | `'#000000'` | Color of the fixed pivot point |
+| `arm1Color`, `arm2Color` | `string` | `'#1a1a1a'` | Color of each arm |
+| `bob1Color`, `bob2Color` | `string` | `'#7C3AED'` | Color of each bob |
+| `armStrokeWidth` | `number` | `2.5` | Stroke width of both arms, in pixels |
+| `pivotRadius` | `number` | `6` | Radius of the pivot circle, in pixels |
+
+**RK4 integrator**
+
+The Euler-Lagrange equations give angular accelerations `a1` and `a2`. RK4 samples the 
+derivative at four points within each timestep and takes a weighted average - far more stable than Euler integration at the same step size.
+
+**Component**
+
+<CodeFrom file="simulation/double-pendulum/Component.tsx" />

@@ -1,0 +1,21 @@
+.tokenKeyword,
+.tokenString,
+.tokenNumber,
+.tokenTag {
+    color: var(--code-accent)
+}
+
+.tokenDefault,
+.tokenFunction {
+    color: var(--code-ink)
+}
+
+.tokenProperty,
+.tokenAttr {
+    color: var(--code-prop)
+}
+
+.tokenComment {
+    color: var(--code-comment);
+    font-style: italic
+}

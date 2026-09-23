@@ -1,0 +1,35 @@
+Embers rise from wherever your cursor sits, drifting up and flickering sideways before fading out. Particles come from a fixed pool that gets reused as they die, so there's no extra allocation per frame no matter how long it runs.
+
+**Usage**
+
+```tsx
+import CursorTrailFire from './CursorTrailFire'
+
+<CursorTrailFire
+  spawnPerFrame={3}
+  maxParticles={150}
+  baseRadius={5}
+  riseSpeed={1.8}
+  spread={10}
+  flicker={0.28}
+  gravity={-0.04}
+  colorSteps={['rgba(120,30,160,1)', 'rgba(95,25,135,0.9)', 'rgba(70,20,105,0.75)', 'rgba(50,15,80,0.45)']}
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `spawnPerFrame` | `number` | `3` | How many new particles appear each frame |
+| `maxParticles` | `number` | `150` | Size of the reused particle pool |
+| `baseRadius` | `number` | `5` | Starting radius of each particle in pixels |
+| `riseSpeed` | `number` | `1.8` | How fast particles drift upward |
+| `spread` | `number` | `10` | Horizontal randomness in where a particle spawns |
+| `flicker` | `number` | `0.28` | Random sideways jitter applied each frame |
+| `gravity` | `number` | `-0.04` | Added to vertical speed each frame, negative makes particles rise faster over time |
+| `colorSteps` | `string[]` | 4 rgba strings | Colors used as a particle ages, from freshest to about to fade out |
+
+**Component**
+
+<CodeFrom file="cursor/trail-fire/Component.tsx" />

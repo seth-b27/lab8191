@@ -1,0 +1,36 @@
+A cloth mesh built with Verlet integration and iterative constraint solving.
+The top row is pinned - drag any free point to pull and drape the fabric.
+
+**Usage**
+
+```tsx
+import ClothSimulation from './ClothSimulation'
+
+<ClothSimulation
+  restDist={22}
+  gravity={1200}
+  damping={0.982}
+  iterations={3}
+  stiffness={0.1}
+  snapRadius={36}
+  maxCols={22}
+  maxRows={10}
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `restDist` | `number` | `22` | Rest length between neighboring points in pixels |
+| `gravity` | `number` | `1200` | Downward acceleration applied to unpinned points |
+| `damping` | `number` | `0.982` | Velocity retained each step (0 to 1, lower settles faster) |
+| `iterations` | `number` | `3` | Constraint solver passes per frame, more keeps the mesh stiffer |
+| `stiffness` | `number` | `0.1` | How strongly a constraint pulls back toward its rest length |
+| `snapRadius` | `number` | `36` | Max distance in pixels from a pointer to grab the nearest point |
+| `maxCols` | `number` | `22` | Upper bound on grid columns, actual count also depends on container width |
+| `maxRows` | `number` | `10` | Upper bound on grid rows, actual count also depends on container height |
+
+**Component**
+
+<CodeFrom file="simulation/cloth/Component.tsx" />

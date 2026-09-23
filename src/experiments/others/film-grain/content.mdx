@@ -1,0 +1,19 @@
+A film grain overlay rendered on a canvas every frame via requestAnimationFrame. Each pixel gets a random grayscale value - at 18% opacity with an overlay blend mode, it reads as organic film noise over the grayscale architecture photo beneath.
+
+**Usage**
+
+```tsx
+import FilmGrain from './FilmGrain'
+
+<FilmGrain image="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&q=80" />
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `image` | `string` | Unsplash city photo | URL of the background image the grain renders over |
+
+**Component**
+
+<CodeFrom file="others/film-grain/Component.tsx" />

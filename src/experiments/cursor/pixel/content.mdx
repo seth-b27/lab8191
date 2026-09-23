@@ -1,0 +1,32 @@
+A PICO-8 inspired pixel trail that snaps to an 8px grid as you move.
+Click anywhere to scatter pixels outward with gravity and drag physics. 
+
+**Usage**
+
+```tsx
+import CursorPixel from './CursorPixel'
+
+<CursorPixel
+  pixelSize={8}
+  lerpSpeed={0.18}
+  fadeFrames={35}
+  palette={[ '#0061fb', '#ff0040']}
+  scatterCount={18}
+  pixelMax={200}
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `pixelSize` | `number` | `8` | Size of each grid cell in pixels |
+| `lerpSpeed` | `number` | `0.18` | How quickly the trail eases toward the cursor (0 to 1, higher is snappier) |
+| `fadeFrames` | `number` | `35` | Roughly how many frames a trail pixel stays visible before fading out |
+| `palette` | `string[]` | 12 hex colors | Colors picked at random for each spawned pixel |
+| `scatterCount` | `number` | `18` | How many pixels burst outward on click or tap |
+| `pixelMax` | `number` | `200` | Size of the reused pixel pool |
+
+**Component**
+
+<CodeFrom file="cursor/pixel/Component.tsx" />

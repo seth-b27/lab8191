@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Geist:wght@300;400;500&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #f9f9f8;
+  --color-ink: #1a1a1a;
+  --color-muted: #666666; /*text/captions*/
+  --color-subtle: #8e8e88; 
+  --color-border: #e2e2df;
+
+  /* complementary */
+  --color-blue: #A2CFFE;
+  --color-pink: #FFE5EC;
+  --color-purple: #7A75C4;
+  --color-teal: #B0E0E6;
+
+  --code-bg: #ECEBE7;
+  --code-accent: #0000ee; 
+  --code-ink: #000000; 
+  --code-prop: #FF0000;
+  --code-comment: #1a1a1a;
+
+  --color-panel: #dcdcdc;
+  --color-panel-hover: rgba(0, 0, 0, 0.05);
+
+  --color-accent-purple: #7C3AED;
+
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-sans: 'Geist', system-ui, sans-serif;
+
+  --text-caption: 0.75rem;
+  --text-body: 0.875rem;
+  --text-sub: 0.95rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5rem;
+  --text-hero: 2.5rem;
+
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 3rem;
+  --space-2xl: 8rem;
+  /* --space-2xl: 10,rem; */
+
+  --gutter: 2.8125rem;
+  --gutter-sm: 1.25rem;
+
+  /* layout  */
+  --page-max: 90rem;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-card: 16px;
+
+  /* motion  */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 380ms;
+  --duration-reveal: 700ms
+}
+
+html {
+  font-size: clamp(14px, 1.111vw, 16px)
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased
+}
+
+img,
+canvas,
+svg {
+  display: block;
+  max-width: 100%
+}
+
+a {
+  color: inherit;
+  text-decoration: none
+}
+
+::selection {
+  background: var(--color-accent-purple);
+  /* background: #F97316; */
+  color: var(--color-bg)
+}
+
+.page-container {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter)
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 0 var(--gutter-sm);
+  }
+}

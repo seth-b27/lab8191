@@ -1,0 +1,37 @@
+Type anything and watch the annotation skeleton appear over the text - cap-height guides, baseline rules, space markers, and left/right measurement arms, all drawn live in SVG as you type.
+
+**Usage**
+
+```tsx
+import TypographicAnnotationEngine from './TypographicAnnotationEngine'
+
+// use default config as is, or
+<TypographicAnnotationEngine />
+
+// override any subset of AnnotationConfig
+<TypographicAnnotationEngine config={{ fontSize: 32, primary: '#7C3AED' }} />
+```
+
+**Config**
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `fontSize` | `number` | `42` | Font size in pixels |
+| `fontFamily` | `string` | `"'Geist', system-ui, sans-serif"` | Font family used for both the text and measurement |
+| `bg` | `string` | `'#ECEBE7'` | Background color of the SVG |
+| `primary` | `string` | `'#1a1a1a'` | Color of the text and all annotation lines |
+| `padLeft` | `number` | `54` | Left padding before text starts, also where the measurement arm sits |
+| `padRight` | `number` | `40` | Right padding after the longest line |
+| `padTop` | `number` | `70` | Top padding before the first line's cap height |
+| `bottomPad` | `number` | `36` | Padding below the last line's bottom measurement line |
+| `nodeRRatio` | `number` | `0.055` | Radius of the small circle markers, as a ratio of font size |
+| `spaceBarAboveRatio` | `number` | `0.22` | How far the space markers sit above the cap line, as a ratio of font size |
+| `bottomLineBelowRatio` | `number` | `0.32` | How far the bottom measurement line sits below the baseline, as a ratio of font size |
+| `lineSpacing` | `number` | `2.5` | Line height multiplier |
+| `tabSpaces` | `number` | `4` | Number of spaces inserted when pressing Tab |
+| `maxLineWidth` | `number` | `800` | Width in pixels before a line wraps |
+| `maxChars` | `number` | `80` | Max characters allowed in the input |
+
+**Component**
+
+<CodeFrom file="typography/annotation-engine/Component.tsx" />

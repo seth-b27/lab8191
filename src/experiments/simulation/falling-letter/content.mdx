@@ -1,0 +1,37 @@
+Hover a letter to drop it. Click or tap anywhere to drop them all at once. Fast drags push nearby fallen letters outward.
+
+Dependecy: Matter.js
+
+**Usage**
+
+```tsx
+import FallingLetter from './FallingLetter'
+
+<FallingLetter
+  word="happiness can be found, even in the darkest of time"
+  fontSize={44}
+  fontFamily="'Geist', system-ui, sans-serif"
+  letterGap={2}
+  padX={24}
+  padY={24}
+  bg="#ECEBE7"
+  letterColor="#7C3AED"
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `word` | `string` | see the demo | The text broken into individually falling letters |
+| `fontSize` | `number` | `44` | Font size in pixels |
+| `fontFamily` | `string` | `"'Geist', system-ui, sans-serif"` | Font family for the letters |
+| `letterGap` | `number` | `2` | Extra horizontal spacing between letters in pixels |
+| `padX` | `number` | `24` | Horizontal padding before text wraps to the next line |
+| `padY` | `number` | `24` | Vertical padding above the first line |
+| `bg` | `string` | `'#ECEBE7'` | Background color of the container |
+| `letterColor` | `string` | `'#7C3AED'` | Color of the letters |
+
+**Component**
+
+<CodeFrom file="simulation/falling-letter/Component.tsx" />

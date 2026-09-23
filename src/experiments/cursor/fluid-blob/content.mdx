@@ -1,0 +1,37 @@
+A squashy purple blob that follows your cursor. It stretches when you move and squashes back when you slow down, with six ghost copies trailing behind from a reused pool, so there's no extra allocation per frame.
+
+**Usage**
+
+```tsx
+import CursorFluidBlob from './CursorFluidBlob'
+
+<CursorFluidBlob
+  points={8}
+  baseRadius={28}
+  lerpPos={0.10}
+  lerpRadius={0.18}
+  stretchAmt={0.55}
+  wobbleAmt={2.2}
+  wobbleSpeed={0.055}
+  color="90,50,210"
+  trailCount={6}
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `points` | `number` | `8` | Number of vertices around the blob's perimeter. More points give a smoother outline |
+| `baseRadius` | `number` | `28` | Resting radius of the blob in pixels |
+| `lerpPos` | `number` | `0.10` | How quickly the blob's position eases toward the cursor (0 to 1, higher is snappier) |
+| `lerpRadius` | `number` | `0.18` | How quickly each point's radius eases toward its wobble target |
+| `stretchAmt` | `number` | `0.55` | How much the blob elongates based on movement speed |
+| `wobbleAmt` | `number` | `2.2` | Amplitude of the idle outline oscillation, in pixels |
+| `wobbleSpeed` | `number` | `0.055` | Speed of the idle oscillation |
+| `color` | `string` | `'90,50,210'` | Fill color as an `"r,g,b"` triplet, without the `rgb()` wrapper|
+| `trailCount` | `number` | `6` | Number of ghost copies in the smear trail |
+
+**Component**
+
+<CodeFrom file="cursor/fluid-blob/Component.tsx" />
