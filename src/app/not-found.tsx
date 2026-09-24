@@ -12,7 +12,7 @@ export default function NotFound() {
             <Header/>
             <main
                 className="flex flex-col items-center justify-center text-center"
-                style={{ minHeight: 'calc(100vh - 60px)' }} 
+                style={{ minHeight: 'calc(100vh - 125px)' }} 
             >
                 <div
                     className="flex items-center font-bold"
@@ -33,6 +33,7 @@ export default function NotFound() {
                         lineHeight: 1.7,
                         color: 'var(--color-muted)',
                         marginTop: 'var(--space-md)',
+                        padding: '0 0.5rem',
                         width: '100%',
                         maxWidth: '64ch',
                     }}

@@ -17,7 +17,7 @@ export default function HomePage() {
         <>
             {/* <Aurora/> */}
             <a
-                href="https://github.com/seth-b27/lab-8191"
+                href="https://github.com/seth-b27/lab8191"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="View source on GitHub"
