@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lab 8191
 
-## Getting Started
+An archive of small, interactive UI components that feature 🧀 cursor effects, 🎇 physics simulations, 🗂️ typography, and 🪎 a few odds and ends. 
 
-First, run the development server:
+Each one is a self-contained demo with a live preview, a short write-up, and its component code. 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Live at [lab8191.vercel.app](https://lab8191.vercel.app).
+
+### 1. Project structure
+
+```text
+src/
+├── app/
+│   ├── [category]/
+│   │   ├── page.tsx           # redirects to the category's first experiment
+│   │   └── [slug]/
+│   │       └── page.tsx       # renders one experiment: demo + MDX write-up
+│   ├── not-found.tsx
+│   └── page.tsx
+├── experiments/
+│   └── <category>/
+│       ├── index.ts           # registers each experiment (slug, title, component, contentPath)
+│       └── <experiment>/
+│           ├── Component.tsx  # the demo itself
+│           └── content.mdx    # write-up, rendered via <CodeFrom>
+└── components/
+    ├── CodeBlock/             # syntax-highlighted code display
+    │   └── CodeFrom.tsx       # pulls source (or a named region) straight from Component.tsx into the MDX
+    └── CategoryLayout/        # sidebar nav + demo + MDX shell shared by every experiment page
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Each experiment's `content.mdx` uses `<CodeFrom file="..." />` to render source pulled live from its own `Component.tsx`, so the docs can never drift out of sync with the actual code.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. Adding a new experiment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Want to add one? Here's how:
 
-## Learn More
+1. Create `src/experiments/<category>/<experiment-name>/Component.tsx` and `content.mdx`
+2. Register it in `src/experiments/<category>/index.ts`, wrapping the component in `next/dynamic()`.
+3. If it's a component with a handful of tunable values, kindly expose them as props with sensible defaults rather than a fixed internal config. That way, the usage section in the MDX becomes more meaningful.
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Get the project running locally on your machine:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Install dependencies
+npm install
 
-## Deploy on Vercel
+# Start the development server
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Once running, open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Inspiration, acknowledgement & license
+ 
+Some of these components may have been inspired by awesome effects and ideas already out there. While the code here is my own take, I would like to make sure credit goes where it's due! So, if you recognize any interactions you created, please open an issue and I'll gladly add you to the credits. 
+ 
+Photos used in demos come from [Unsplash](https://unsplash.com), and fall under the [Unsplash License](https://unsplash.com/license).
+ 
+This project is licensed under the MIT License.
+
+Thank you!
+
+🍔
