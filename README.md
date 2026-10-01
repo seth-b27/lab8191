@@ -29,7 +29,7 @@ src/
     └── CategoryLayout/        # sidebar nav + demo + MDX shell shared by every experiment page
 ```
 
-Each experiment's `content.mdx` uses `<CodeFrom file="..." />` to render source pulled live from its own `Component.tsx`, so the docs can never drift out of sync with the actual code.
+Each experiment's `content.mdx` renders source code pulled straight from its own `Component.tsx` via `<CodeFrom file="..." />`, so the docs can't drift out of sync with the code.
 
 ### 2. Adding a new experiment
 

@@ -15,7 +15,7 @@ const categories: { slug: Category; label: string }[] = [
 export default function HomePage() {
     return (
         <>
-            {/* <Aurora/> */}
+            {/* <Aurora/>*/}
             <a
                 href="https://github.com/seth-b27/lab8191"
                 target="_blank"
@@ -62,7 +62,7 @@ export default function HomePage() {
                             <li key={slug} style={{ borderBottom: '1px solid rgba(0,0,0,0.15)' }}>
                                 <Link
                                     href={`/${slug}`}
-                                    className="block transition-colors hover:bg-[var(--color-panel-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-purple)]"
+                                    className="category-row transition-colors hover:bg-[var(--color-panel-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-purple)]"
                                     style={{
                                         padding: 'var(--space-xs) var(--space-xs)',
                                         fontSize: 'var(--text-sub)',
@@ -70,6 +70,7 @@ export default function HomePage() {
                                         transitionDuration: 'var(--duration-base)',
                                     }}
                                 >
+                                    <span aria-hidden="true" className="category-row__marker" />
                                     {label}
                                 </Link>
                             </li>
